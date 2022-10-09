@@ -11,12 +11,13 @@ import (
 func ExibeTodosUsuario(c *gin.Context) {
 	var usuario []models.Usuario
 	database.DB.Find(&usuario)
-	c.JSON(201, usuario)
+	c.JSON(200, usuario)
 
 }
 
 func CriaNovoUsuario(c *gin.Context) {
 	var usuario []models.Usuario
+	c.JSON(201, gin.H{"data": "Usuario criado com sucesso"})
 	if err := c.ShouldBindJSON(&usuario); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})
@@ -35,7 +36,20 @@ func CriaNovoUsuario(c *gin.Context) {
 func DeletaUsuario(c *gin.Context) {
 	var usuario models.Usuario
 	username := c.Params.ByName("username")
-	database.DB.Where(&models.Usuario{Username: username}).Delete(&usuario)
+	result := database.DB.Where(&models.Usuario{Username: username}).First(&usuario).Delete(&usuario)
+
+	if result.Error != nil {
+		c.JSON(404, gin.H{"error": "user not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&usuario); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
+
+	database.DB.Model(*&usuario).UpdateColumns(usuario)
 	c.JSON(http.StatusOK, gin.H{"data": "Usuario deletado com sucesso"})
 }
 
