@@ -16,42 +16,52 @@ func ExibeTodosUsuario(c *gin.Context) {
 }
 
 func CriaNovoUsuario(c *gin.Context) {
-	var usuario models.Usuario
+	var usuario []models.Usuario
+	c.JSON(201, gin.H{"data": "Usuario criado com sucesso"})
 	if err := c.ShouldBindJSON(&usuario); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error()})
 		return
 	}
-	database.DB.Create(&usuario)
-	c.JSON(http.StatusOK, usuario)
-
-}
-
-func BuscaUsuarioPorID(c *gin.Context) {
-	var usuario models.Usuario
-	id := c.Params.ByName("id")
-	database.DB.First(&usuario, id)
-
-	if usuario.ID == 0 {
-		c.JSON(http.StatusNotFound, gin.H{
-			"Not found": "Usuario não encontrado"})
+	result := database.DB.Create(&usuario)
+	if result.Error != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Usuário não encontrado"})
 		return
 	}
-
 	c.JSON(http.StatusOK, usuario)
+
 }
 
 func DeletaUsuario(c *gin.Context) {
 	var usuario models.Usuario
-	id := c.Params.ByName("id")
-	database.DB.Delete(&usuario, id)
+	username := c.Params.ByName("username")
+	result := database.DB.Where(&models.Usuario{Username: username}).First(&usuario).Delete(&usuario)
+
+	if result.Error != nil {
+		c.JSON(404, gin.H{"error": "user not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&usuario); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": err.Error()})
+		return
+	}
+
+	database.DB.Model(*&usuario).UpdateColumns(usuario)
 	c.JSON(http.StatusOK, gin.H{"data": "Usuario deletado com sucesso"})
 }
 
 func EditaUsuario(c *gin.Context) {
 	var usuario models.Usuario
-	id := c.Params.ByName("id")
-	database.DB.First(&usuario, id)
+	username := c.Params.ByName("username")
+	result := database.DB.Where(&models.Usuario{Username: username}).First(&usuario)
+
+	if result.Error != nil {
+		c.JSON(404, gin.H{"error": "user not found"})
+		return
+	}
 
 	if err := c.ShouldBindJSON(&usuario); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -66,9 +76,9 @@ func EditaUsuario(c *gin.Context) {
 func BuscaUsuarioPorUsername(c *gin.Context) {
 	var usuario models.Usuario
 	username := c.Param("username")
-	database.DB.Where(&models.Usuario{Username: username}).First(&usuario)
+	result := database.DB.Where(&models.Usuario{Username: username}).First(&usuario)
 
-	if usuario.ID == 0 {
+	if result.Error != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"Not found": "Usuario não encontrado"})
 		return

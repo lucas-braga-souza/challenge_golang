@@ -8,10 +8,9 @@ import (
 func HandleRequets() {
 	r := gin.Default()
 	r.GET("/usuario", controllers.ExibeTodosUsuario)
-	r.GET("/usuario/username/:username", controllers.BuscaUsuarioPorUsername)
-	r.GET("/usuario/:id", controllers.BuscaUsuarioPorID)
+	r.GET("/usuario/:username", controllers.BuscaUsuarioPorUsername)
 	r.POST("/usuario", controllers.CriaNovoUsuario)
-	r.PUT("/usuario/:id", controllers.EditaUsuario)
-	r.DELETE("/usuario/:id", controllers.DeletaUsuario)
+	r.PUT("/usuario/:username", controllers.EditaUsuario)
+	r.DELETE("/usuario/:username", controllers.DeletaUsuario)
 	r.Run()
 }
